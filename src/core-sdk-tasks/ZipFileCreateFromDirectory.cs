@@ -94,11 +94,79 @@ namespace Microsoft.DotNet.Build.Tasks
                                 if (foundMatch)
                                 {
                                     Log.LogMessage(MessageImportance.Low, "Excluding {0} from archive.", file);
-                                    continue;
+                                    co#include "BaseVSShader.h"
+
+// Note: you have to run buildshaders.bat to generate these files from the FXC code.
+#include "sdk_lightmap_ps20.inc"
+#include "sdk_lightmap_vs20.inc"
+
+BEGIN_VS_SHADER( SDK_Lightmap, "Help for SDK_Lightmap" )
+
+	BEGIN_SHADER_PARAMS
+		SHADER_PARAM( BUMPMAP, SHADER_PARAM_TYPE_TEXTURE, "shadertest/BaseTexture", "base texture" )
+		SHADER_PARAM( BUMPFRAME, SHADER_PARAM_TYPE_INTEGER, "0", "frame number for $bumpmap" )
+	END_SHADER_PARAMS
+
+	// Set up anything that is necessary to make decisions in SHADER_FALLBACK.
+	SHADER_INIT_PARAMS()
+	{
+		if( !params[BUMPFRAME]->IsDefined() )
+		{
+			params[BUMPFRAME]->SetIntValue( 0 );
+		}
+	}
+
+	SHADER_FALLBACK
+	{
+		return 0;
+	}
+
+	// Note: You can create member functions inside the class definition.
+	int SomeMemberFunction()
+	{
+		return 0;
+	}
+
+	SHADER_INIT
+	{
+		LoadTexture( BASETEXTURE );
+	}
+
+	SHADER_DRAW
+	{
+		SHADOW_STATE
+		{
+			// Enable the texture for base texture and lightmap.
+			pShaderShadow->EnableTexture( SHADER_TEXTURE_STAGE0, true );
+			pShaderShadow->EnableTexture( SHADER_TEXTURE_STAGE1, true );
+
+			sdk_lightmap_vs20_Static_Index vshIndex;
+			pShaderShadow->SetVertexShader( "sdk_lightmap_vs20", vshIndex.GetIndex() );
+
+			sdk_lightmap_ps20_Static_Index pshIndex;
+			pShaderShadow->SetPixelShader( "sdk_lightmap_ps20", pshIndex.GetIndex() );
+
+			DefaultFog();
+		}
+		DYNAMIC_STATE
+		{
+			BindTexture( SHADER_TEXTURE_STAGE0, BASETEXTURE, FRAME );
+			pShaderAPI->BindLightmap( SHADER_TEXTURE_STAGE1 );
+		}
+		Draw();
+	}
+END_SHADER
+ntinue;BEGIN_VS_SHADER( [shader name], [help string] ) / END_SHADER
+SHADER_PARAM( [param name], [param type], [default value], [help string] )
+SHADER_PARAM( LIGHT_COLOR, SHADER_PARAM_TYPE_VEC3, "1 0 0", "This is the directional light color." )
+
+            XrCompositionLayerQuad
                                 }
 
                                 var relativePath = MakeRelativePath(SourceDirectory, file);
+            SHADER_PARAM( LIGHT_COLOR, SHADER_PARAM_TYPE_VEC3, "1 0 0", "This is the directional light color." )
                                 zipFile.CreateEntryFromFile(file, relativePath, CompressionLevel.Optimal);
+            SHADER_INIT_PARAMS
                             }
                         }
                     }
